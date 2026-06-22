@@ -1,17 +1,30 @@
 import './styles/app.css';
+import './styles/onboarding.css';
+import './styles/chat.css';
+import './styles/memory-ui.css';
 import { initDB } from './features/memory/index.js';
+import {
+  isOnboardingCompleted,
+  isOnboardingSkipped,
+} from './features/onboarding/onboardingStore.js';
+import { mountOnboarding } from './features/onboarding/onboardingView.js';
+import { initChatView } from './features/chat/chatView.js';
 
 const app = document.querySelector('#app');
 
-app.innerHTML = `
-  <main class="app-shell">
-    <section class="hero-card" aria-labelledby="app-title">
-      <h1 id="app-title">Chloe</h1>
-      <p>一位会记得、会遗忘、也会重新想起你的 AI 伴侣。记忆系统已准备初始化。</p>
-    </section>
-  </main>
-`;
+async function startApp() {
+  await initDB();
 
-initDB().catch((error) => {
-  console.error('Failed to initialize Chloe memory database:', error);
+  let userName = '';
+
+  if (!isOnboardingCompleted() && !isOnboardingSkipped()) {
+    const result = await mountOnboarding(document.body);
+    userName = result?.userName ?? '';
+  }
+
+  await initChatView(app, { userName });
+}
+
+startApp().catch((error) => {
+  console.error('Failed to initialize Chloe:', error);
 });
