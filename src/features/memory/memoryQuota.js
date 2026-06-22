@@ -50,6 +50,10 @@ export async function getTodayCount() {
   return quota?.count ?? 0;
 }
 
+export async function canAddMemory() {
+  return (await getTodayCount()) < DAILY_LIMIT;
+}
+
 export async function tryConsumeQuota() {
   const today = getTodayDate();
   const { store, transaction } = await getStore('daily_quota', 'readwrite');

@@ -1,5 +1,5 @@
 import { callApi } from '../../api/deepseek.js';
-import { tryConsumeQuota } from './memoryQuota.js';
+import { canAddMemory, tryConsumeQuota } from './memoryQuota.js';
 import { saveMemory } from './memoryStore.js';
 import { calculateProtectedUntil } from './memoryWeightEngine.js';
 
@@ -43,6 +43,10 @@ export function detectMemoryTrigger(userMessage) {
 }
 
 export async function extractMemory(userMessage, apiKey) {
+  if (!(await canAddMemory())) {
+    return { error: 'QUOTA_EXCEEDED' };
+  }
+
   const responseText = await callApi({
     systemPrompt: EXTRACT_SYSTEM_PROMPT,
     userPrompt: userMessage,
