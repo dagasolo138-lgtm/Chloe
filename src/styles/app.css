@@ -1,0 +1,51 @@
+@import './tokens.css';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at 20% 20%, rgba(221, 214, 254, 0.7), transparent 32rem),
+    linear-gradient(135deg, var(--color-mist), var(--color-mist-deep));
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--space-8);
+}
+
+.hero-card {
+  width: min(42rem, 100%);
+  padding: var(--space-8);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.hero-card h1 {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  letter-spacing: -0.08em;
+}
+
+.hero-card p {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.8;
+}
