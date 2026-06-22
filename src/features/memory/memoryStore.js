@@ -155,11 +155,13 @@ export async function restoreFromRecycleBin(id) {
   }
 
   const { recycledAt, ...memory } = recycledMemory;
+  const now = Date.now();
   const restoredMemory = {
     ...memory,
-    weight: 80,
+    weight: 90,
+    protectedUntil: now + 90 * DAY_MS,
     isUserRestored: true,
-    updatedAt: Date.now(),
+    updatedAt: now,
   };
 
   transaction.objectStore('memories').put(restoredMemory);

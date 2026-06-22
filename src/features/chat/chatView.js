@@ -12,7 +12,7 @@ import {
   handleReminderResponse,
   markReminderSent,
 } from '../memory/index.js';
-import { mountMemoryPanel } from '../memory/ui/memoryPanel.js';
+import { mountMemoryPanel, showApiKeySettingsModal } from '../memory/ui/memoryPanel.js';
 import {
   createConversation,
   getActiveConversationId,
@@ -149,8 +149,8 @@ async function ensureConversation(userName) {
 }
 
 function renderMarkdown(content) {
-  if (window.marked?.parse) {
-    return window.marked.parse(content);
+  if (window.marked?.parse && window.DOMPurify?.sanitize) {
+    return window.DOMPurify.sanitize(window.marked.parse(content));
   }
 
   return escapeHtml(content).replaceAll('\n', '<br>');
@@ -307,6 +307,10 @@ export async function initChatView(container, { userName } = {}) {
   const settingsButton = container.querySelector('[data-action="settings"]');
 
   renderMessages(messagesContainer, conversation);
+
+  if (!getApiKey()) {
+    showApiKeySettingsModal({ title: '请先设置 API Key', required: true });
+  }
 
   settingsButton.addEventListener('click', () => {
     mountMemoryPanel(document.body);
