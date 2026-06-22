@@ -1,5 +1,5 @@
 const DB_NAME = 'chloe-db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const RECYCLE_RETENTION_DAYS = 145;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -50,6 +50,7 @@ export function initDB() {
       ensureStore(db, 'daily_quota', { keyPath: 'date' });
       ensureStore(db, 'checkins', { keyPath: 'date' });
       ensureStore(db, 'stage_log', { keyPath: 'id' });
+      ensureStore(db, 'conversations', { keyPath: 'id' }, ['createdAt', 'updatedAt']);
     };
 
     request.onsuccess = () => resolve(request.result);

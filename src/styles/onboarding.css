@@ -1,0 +1,148 @@
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onboarding-card {
+  width: min(480px, 90vw);
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.onboarding-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.onboarding-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: -24px 0 0;
+}
+
+.onboarding-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+}
+
+.onboarding-input:focus {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.onboarding-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.onboarding-option {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 200ms;
+  text-align: left;
+}
+
+.onboarding-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.onboarding-option.selected {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.onboarding-option__label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.onboarding-option__desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 8px;
+  line-height: 1.5;
+  display: none;
+}
+
+.onboarding-option.expanded .onboarding-option__desc {
+  display: block;
+}
+
+.onboarding-option__confirm {
+  display: none;
+  margin-top: 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.onboarding-option.expanded .onboarding-option__confirm {
+  display: block;
+}
+
+.onboarding-btn {
+  padding: 14px 24px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 200ms;
+}
+
+.onboarding-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.onboarding-skip {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.onboarding-progress {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.onboarding-progress__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 300ms;
+}
+
+.onboarding-progress__dot.active {
+  background: #fff;
+}
