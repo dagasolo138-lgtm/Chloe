@@ -4,6 +4,7 @@ import { saveMemory } from './memoryStore.js';
 import { calculateProtectedUntil } from './memoryWeightEngine.js';
 
 const MEMORY_TRIGGERS = ['记住', '记一下', '帮我记', '记下来', '别忘了', '记得', '存一下', '记住这个'];
+const MEMORY_LAYERS = ['identity', 'event', 'habit', 'project', 'knowledge'];
 
 const EXTRACT_SYSTEM_PROMPT = `你是一个记忆提炼助手。
 从用户消息中提炼出值得记住的核心信息。
@@ -28,6 +29,15 @@ function parseMemoryJson(text) {
   return JSON.parse(jsonText);
 }
 
+function normalizeMemoryLayer(layer) {
+  return MEMORY_LAYERS.includes(layer) ? layer : 'knowledge';
+}
+
+function normalizeMemoryContent(content, fallbackContent) {
+  const normalizedContent = String(content ?? '').trim();
+  return normalizedContent || fallbackContent;
+}
+
 export function detectMemoryTrigger(userMessage) {
   return MEMORY_TRIGGERS.some((trigger) => userMessage.includes(trigger));
 }
@@ -48,8 +58,8 @@ export async function extractMemory(userMessage, apiKey) {
   const initialWeight = Math.min(90, Math.max(60, Number.parseInt(extracted.initialWeight, 10) || 80));
   const memory = {
     id: crypto.randomUUID(),
-    layer: extracted.layer,
-    content: extracted.content,
+    layer: normalizeMemoryLayer(extracted.layer),
+    content: normalizeMemoryContent(extracted.content, userMessage),
     summary: '',
     weight: initialWeight,
     initialWeight,
