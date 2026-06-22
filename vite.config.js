@@ -15,7 +15,7 @@ function copyVendorFiles() {
 }
 
 export default defineConfig({
-  base: '/chloe/',
+  base: '/Chloe/',
   plugins: [copyVendorFiles()],
   build: {
     outDir: 'dist',
