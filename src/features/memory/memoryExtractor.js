@@ -1,5 +1,5 @@
 import { callApi } from '../../api/deepseek.js';
-import { canAddMemory, incrementTodayCount } from './memoryQuota.js';
+import { tryConsumeQuota } from './memoryQuota.js';
 import { saveMemory } from './memoryStore.js';
 import { calculateProtectedUntil } from './memoryWeightEngine.js';
 
@@ -50,7 +50,7 @@ export async function extractMemory(userMessage, apiKey) {
   });
   const extracted = parseMemoryJson(responseText);
 
-  if (!(await canAddMemory())) {
+  if (!(await tryConsumeQuota())) {
     return { error: 'QUOTA_EXCEEDED' };
   }
 
@@ -72,7 +72,5 @@ export async function extractMemory(userMessage, apiKey) {
     source: 'ai',
   };
 
-  const savedMemory = await saveMemory(memory);
-  await incrementTodayCount();
-  return savedMemory;
+  return saveMemory(memory);
 }

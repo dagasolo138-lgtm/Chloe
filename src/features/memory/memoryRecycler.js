@@ -4,7 +4,7 @@ import {
   restoreFromRecycleBin,
   updateMemory,
 } from './memoryStore.js';
-import { calculateProtectedUntil } from './memoryWeightEngine.js';
+import { calculateProtectedUntil, RESTORED_WEIGHT } from './memoryWeightEngine.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TIER1_DAYS = 45;
@@ -54,9 +54,9 @@ export async function restoreMemory(id) {
 
   const now = Date.now();
   return updateMemory(restoredMemory.id, {
-    weight: 90,
+    weight: RESTORED_WEIGHT,
+    protectedUntil: calculateProtectedUntil(now, RESTORED_WEIGHT),
     isUserRestored: true,
-    protectedUntil: calculateProtectedUntil(now, 90),
     updatedAt: now,
   });
 }

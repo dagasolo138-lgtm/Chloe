@@ -1,4 +1,5 @@
-import { getAllMemories, updateMemory } from './memoryStore.js';
+import { getAllMemories, updateMemory, initDB } from './memoryStore.js';
+import { getTodayDate } from './memoryQuota.js';
 
 export const INITIAL_WEIGHT = 80;
 export const INIT_WEIGHT = 90;
@@ -45,26 +46,67 @@ export function decayWeight(memory) {
 }
 
 export function needsWarning(memory) {
-  return memory.weight <= WARNING_THRESHOLD && !memory.hasWarningTriggered;
+  return memory.weight <= WARNING_THRESHOLD && !memory.reminderSentAt;
+}
+
+function createRequestPromise(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function createTransactionPromise(transaction) {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}
+
+async function hasRunDecayToday(today) {
+  const db = await initDB();
+  const transaction = db.transaction('daily_quota', 'readonly');
+  const record = await createRequestPromise(transaction.objectStore('daily_quota').get('decay_date'));
+  await createTransactionPromise(transaction);
+  return record?.value === today;
+}
+
+async function markDecayRun(today) {
+  const db = await initDB();
+  const transaction = db.transaction('daily_quota', 'readwrite');
+  transaction.objectStore('daily_quota').put({ date: 'decay_date', value: today, updatedAt: Date.now() });
+  await createTransactionPromise(transaction);
 }
 
 export async function runDailyDecay() {
+  const today = getTodayDate();
+
+  if (await hasRunDecayToday(today)) {
+    return [];
+  }
+
   const memories = await getAllMemories();
   const warningMemories = [];
 
   await Promise.all(
     memories.map(async (memory) => {
-      const decayedMemory = decayWeight(memory);
+      let nextMemory = decayWeight(memory);
 
-      if (decayedMemory !== memory) {
-        await updateMemory(memory.id, decayedMemory);
+      if (needsWarning(nextMemory)) {
+        nextMemory = {
+          ...nextMemory,
+          reminderSentAt: Date.now(),
+        };
+        warningMemories.push(nextMemory);
       }
 
-      if (needsWarning(decayedMemory)) {
-        warningMemories.push(decayedMemory);
+      if (nextMemory !== memory) {
+        await updateMemory(memory.id, nextMemory);
       }
     }),
   );
 
+  await markDecayRun(today);
   return warningMemories;
 }

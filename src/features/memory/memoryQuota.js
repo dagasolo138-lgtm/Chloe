@@ -27,7 +27,8 @@ async function getStore(storeName, mode = 'readonly') {
 }
 
 export function getTodayDate() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 export async function checkIn() {
@@ -49,15 +50,18 @@ export async function getTodayCount() {
   return quota?.count ?? 0;
 }
 
-export async function canAddMemory() {
-  return (await getTodayCount()) < DAILY_LIMIT;
-}
-
-export async function incrementTodayCount() {
+export async function tryConsumeQuota() {
   const today = getTodayDate();
-  const count = (await getTodayCount()) + 1;
   const { store, transaction } = await getStore('daily_quota', 'readwrite');
-  store.put({ date: today, count, updatedAt: Date.now() });
+  const quota = await createRequestPromise(store.get(today));
+  const count = quota?.count ?? 0;
+
+  if (count >= DAILY_LIMIT) {
+    await createTransactionPromise(transaction);
+    return false;
+  }
+
+  store.put({ date: today, count: count + 1, updatedAt: Date.now() });
   await createTransactionPromise(transaction);
-  return count;
+  return true;
 }

@@ -1,18 +1,18 @@
 import {
   DAILY_LIMIT,
-  canAddMemory,
   calculateProtectedUntil,
   getAllMemories,
   getCurrentStage,
   getTodayCount,
   getTotalCheckins,
-  incrementTodayCount,
+  tryConsumeQuota,
   saveMemory,
   STAGES,
 } from '../index.js';
 import { renderMemoryList, LAYER_META } from './memoryList.js';
 import { mountRecycleBin } from './memoryRecycleBin.js';
 import { initMemoryViz } from '../viz/memoryViz.js';
+import { getApiKey, setApiKey } from '../../../api/deepseek.js';
 
 const LAYERS = ['identity', 'event', 'habit', 'project', 'knowledge'];
 let panelElement;
@@ -76,19 +76,18 @@ async function renderLayerContent() {
   await renderMemoryList(listContainer, activeLayer);
 
   content.querySelector('.memory-create-btn').addEventListener('click', async () => {
-    if (!(await canAddMemory())) {
-      window.alert('今日配额已用完');
-      return;
-    }
-
     const text = window.prompt('请输入新的记忆内容')?.trim();
 
     if (!text) {
       return;
     }
 
+    if (!(await tryConsumeQuota())) {
+      window.alert('今日配额已用完');
+      return;
+    }
+
     await saveMemory(createUserMemory(activeLayer, text));
-    await incrementTodayCount();
     await renderLayerContent();
     await renderStatusBar();
   });
@@ -114,6 +113,7 @@ async function renderPanelContent() {
       <button class="memory-nav-btn" type="button" data-action="close">← 返回</button>
       <h2>记忆系统</h2>
       <div class="memory-panel__actions">
+        <button class="memory-nav-btn" type="button" data-action="settings" aria-label="打开设置">⚙</button>
         <button class="memory-nav-btn" type="button" data-action="all">📋</button>
         <button class="memory-nav-btn" type="button" data-action="recycle">🗑</button>
       </div>
@@ -134,6 +134,10 @@ async function renderPanelContent() {
   });
 
   panelElement.querySelector('[data-action="close"]').addEventListener('click', unmountMemoryPanel);
+  panelElement.querySelector('[data-action="settings"]').addEventListener('click', () => {
+    showApiKeySettingsModal();
+  });
+
   panelElement.querySelector('[data-action="all"]').addEventListener('click', async () => {
     activeLayer = activeLayer === 'all' ? null : 'all';
     const content = panelElement.querySelector('.memory-layer-content');
@@ -157,6 +161,53 @@ async function renderPanelContent() {
 
   await renderLayerContent();
   await renderStatusBar();
+}
+
+export function showApiKeySettingsModal({ title = '设置', required = false } = {}) {
+  const existingModal = document.querySelector('.api-key-modal-backdrop');
+  existingModal?.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'api-key-modal-backdrop';
+  backdrop.innerHTML = `<div class="api-key-modal" role="dialog" aria-modal="true" aria-labelledby="api-key-modal-title">
+    <h2 id="api-key-modal-title">${title}</h2>
+    <label class="api-key-modal__field">
+      <span>DeepSeek API Key</span>
+      <input class="api-key-modal__input" type="password" placeholder="sk-..." value="${escapeAttribute(getApiKey() ?? '')}" />
+    </label>
+    <div class="api-key-modal__actions">
+      ${required ? '' : '<button class="api-key-modal__cancel" type="button">取消</button>'}
+      <button class="api-key-modal__save" type="button">保存</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(backdrop);
+
+  const input = backdrop.querySelector('.api-key-modal__input');
+  const close = () => backdrop.remove();
+
+  backdrop.querySelector('.api-key-modal__save').addEventListener('click', () => {
+    const value = input.value.trim();
+
+    if (required && !value) {
+      input.focus();
+      return;
+    }
+
+    setApiKey(value);
+    close();
+  });
+
+  backdrop.querySelector('.api-key-modal__cancel')?.addEventListener('click', close);
+  input.focus();
+}
+
+function escapeAttribute(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 }
 
 export async function mountMemoryPanel(container) {
