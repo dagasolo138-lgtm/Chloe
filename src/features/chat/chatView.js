@@ -275,6 +275,29 @@ async function appendReminderIfNeeded(conversation, messagesContainer) {
   renderMessages(messagesContainer, conversation);
 }
 
+
+function getStartupPendingReminders() {
+  return Array.isArray(window.__pendingReminders) ? window.__pendingReminders : [];
+}
+
+async function appendStartupRemindersIfNeeded(conversation, messagesContainer) {
+  const reminders = getStartupPendingReminders();
+
+  if (!reminders.length) {
+    return false;
+  }
+
+  window.__pendingReminders = [];
+
+  for (const memory of reminders) {
+    conversation.messages.push(createMessage('assistant', buildReminderMessage(memory)));
+    await markReminderSent(memory.id);
+  }
+
+  renderMessages(messagesContainer, conversation);
+  return true;
+}
+
 function renderChatShell(container, conversation) {
   container.innerHTML = `<section class="chat-layout">
     <header class="chat-nav">
@@ -307,6 +330,14 @@ export async function initChatView(container, { userName } = {}) {
   const settingsButton = container.querySelector('[data-action="settings"]');
 
   renderMessages(messagesContainer, conversation);
+
+  if (conversation.messages.some((message) => message.role === 'assistant')) {
+    const appendedStartupReminders = await appendStartupRemindersIfNeeded(conversation, messagesContainer);
+
+    if (appendedStartupReminders) {
+      conversation = await saveConversation(conversation);
+    }
+  }
 
   if (!getApiKey()) {
     showApiKeySettingsModal({ title: '请先设置 API Key', required: true });
@@ -396,6 +427,7 @@ export async function initChatView(container, { userName } = {}) {
         signal: abortController.signal,
       });
 
+      await appendStartupRemindersIfNeeded(conversation, messagesContainer);
       await appendReminderIfNeeded(conversation, messagesContainer);
       await checkStageAdvance(getConversationCount(), apiKey);
       conversation = await saveConversation(conversation);
